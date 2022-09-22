@@ -41,15 +41,35 @@ namespace Flowframes.IO
             if (IoUtils.IsPathDirectory(saveDirOrPath))
                 savePath = Path.Combine(saveDirOrPath, Path.GetFileName(url));
 
-            IoUtils.TryDeleteIfExists(savePath);
+            //IoUtils.TryDeleteIfExists(savePath);
             Directory.CreateDirectory(Path.GetDirectoryName(savePath));
             Logger.Log($"Downloading '{url}' to '{savePath}'", true);
+
+            // to use aria2
+            string aria2File = "aria2.txt";
+            try
+            {
+				File.AppendAllLines(aria2File, new List<string>
+				{
+					url.Replace('\\', '/'),
+					$"  dir={Path.GetDirectoryName(savePath)}",
+					$"  out={Path.GetFileName(savePath)}"
+				});
+            }
+            catch (Exception anyException)
+            {
+                Logger.Log($"Exception occurred while logging aria2: {anyException}");
+            }
+
+
             Stopwatch sw = new Stopwatch();
             sw.Restart();
-            bool completed = false;
+            bool completed = true;
             int lastProgPercentage = -1;
-            var client = new WebClient();
 
+            /*
+            var client = new WebClient();
+            
             client.DownloadProgressChanged += (sender, args) =>
             {
                 if (sw.ElapsedMilliseconds > 200 && args.ProgressPercentage != lastProgPercentage)
@@ -65,7 +85,6 @@ namespace Flowframes.IO
                     Logger.Log("Download failed: " + args.Error.Message, !log);
                 completed = true;
             };
-
             client.DownloadFileTaskAsync(url, savePath).ConfigureAwait(false);
 
             while (!completed)
@@ -93,6 +112,7 @@ namespace Flowframes.IO
 
                 await Task.Delay(500);
             }
+            */
 
             Logger.Log($"Downloaded '{Path.GetFileName(url)}' ({IoUtils.GetFilesize(savePath) / 1024} KB)", true);
         }
